@@ -1,0 +1,29 @@
+---
+
+- name: Archive the build directory
+  ansible.builtin.command:
+    cmd: "tar -czf {{archive_file}} -C {{ build_dir }} ."
+  delegate_to: localhost
+
+- name: Stop the specified IIS application pool
+  community.windows.win_iis_webapppool:
+    name: '{{app_pool_name}}'  # Replace with the name of your application pool
+    state: stopped
+
+- name: Copy zip file to Windows server
+  win_copy:
+    src: "{{archive_file}}"  # Path on the Ansible control machine
+    dest: "{{target_directory}}" 
+        
+- name: Extract tar archive using command
+  win_command: tar -xvf "{{target_file}}" -C "{{api_directory}}"
+
+- name: Remove the build folder after extraction
+  win_file:
+    path: "{{target_file}}"
+    state: absent
+
+- name: Start the specified IIS application pool
+  community.windows.win_iis_webapppool:
+    name: '{{app_pool_name}}' # Replace with the name of your application pool
+    state: started

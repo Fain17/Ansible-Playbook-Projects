@@ -1,0 +1,16 @@
+---
+
+- name: Deploy build files to Windows sever and restart IIS application pool
+  hosts: windows
+  
+  vars:
+    build_dir         : "../Deployments/publish"
+    archive_file      : "../Deployments/publish.tar.gz"
+    app_pool_name     : "<You-App-Pool-Name>"
+    target_directory  : C:\Users\Administrator\Desktop\Test\
+    target_file       : C:\Users\Administrator\Desktop\Test\publish.tar.gz
+    api_directory     : C:\Users\Administrator\Desktop\Test\API_test
+
+  roles : 
+    - api_deployment
+

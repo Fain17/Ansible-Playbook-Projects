@@ -1,0 +1,55 @@
+---
+
+- name: Read API names from file
+  ansible.builtin.slurp:
+    src: "{{api_list}}"
+  register: api_names_file
+  delegate_to: localhost
+
+- name: Decode API names from the file content
+  set_fact:
+    api_names: "{{ api_names_file.content | b64decode | split('\n') }}"
+
+- name: Create an IIS Application Pool for each API
+  community.windows.win_iis_webapppool:
+    name: "{{ item }}"
+    state: present
+    attributes:
+      # Timespan with full string "day:hour:minute:second.millisecond"
+      recycling.periodicRestart.schedule: ["{{ ['01:00:00', '02:00:00', '03:00:00'][(loop_index) % 3] }}"]
+  loop: "{{ api_names }}"
+  loop_control:
+    loop_var: item
+    index_var: loop_index 
+  ignore_errors: true
+
+- name: Set Advanced Settings
+  win_shell: |
+    Import-Module WebAdministration
+    $poolName = "{{ item }}"
+    $pool = Get-Item "IIS:\AppPools\$poolName"
+    
+    # Set other properties (like No Managed Code, Queue Length)
+    
+    $pool.managedRuntimeVersion = ""
+    $pool.QueueLength = 65535
+    $pool.startMode = "AlwaysRunning"
+    $pool.processModel.idleTimeout = [timespan]::FromMinutes(0)
+   
+    $pool | Set-Item
+
+  loop: "{{ api_names }}"
+  loop_control:
+    loop_var: item
+
+- name: Create IIS web applications under Default Web Site
+  community.windows.win_iis_webapplication:
+    name: "/{{ item }}"
+    site: "Default Web Site"
+    state: present
+    application_pool: "{{ item }}"
+    physical_path: "D:\\API\\{{ item }}"
+    preload_enabled: true
+  loop: "{{ api_names }}"
+  loop_control:
+    loop_var: item

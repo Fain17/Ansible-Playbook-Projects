@@ -1,0 +1,12 @@
+---
+
+- name: Deploy build files to Windows sever and restart IIS application pool
+  hosts: windows
+  
+  vars:
+    ansible_user: Administrator
+    hostable_path: ./dotnet-hosting-3.1.18-win.exe
+
+  roles : 
+    - server_setup
+

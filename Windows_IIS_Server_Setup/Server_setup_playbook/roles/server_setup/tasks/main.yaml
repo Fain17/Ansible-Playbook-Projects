@@ -1,0 +1,101 @@
+---
+
+- name: Install IIS with all features except FTP
+  win_feature:
+    name: 
+      - Web-Server                        # IIS Web Server
+      - Web-WebServer                     # Web Server
+      - Web-Common-Http                   # Common HTTP Features
+      - Web-Default-Doc                   # Default Document
+      - Web-Dir-Browsing                  # Directory Browsing
+      - Web-Http-Errors                   # HTTP Errors
+      - Web-Static-Content                # Static Content
+      - Web-Health                        # Health and Diagnostics
+      - Web-Http-Logging                  # HTTP Logging
+      - Web-Log-Libraries                 # Logging Tools
+      - Web-Request-Monitor               # Request Monitor
+      - Web-Performance                   # Performance Features
+      - Web-Stat-Compression              # Static Content Compression
+      - Web-Dyn-Compression               # Dynamic Content Compression
+      - Web-Security                      # Security
+      - Web-Filtering                     # Request Filtering
+      - Web-Basic-Auth                    # Basic Authentication
+      - Web-Windows-Auth                  # Windows Authentication
+      - Web-App-Dev                       # Application Development
+      - Web-Net-Ext                       # .NET Extensibility
+      - Web-Net-Ext45                     # .NET Extensibility 4.5
+      - Web-ASP                           # ASP
+      - Web-ASP-Net                       # ASP.NET
+      - Web-ASP-Net45                     # ASP.NET 4.5
+      - Web-CGI                           # CGI
+      - Web-ISAPI-Ext                     # ISAPI Extensions
+      - Web-ISAPI-Filter                  # ISAPI Filters
+      - Web-Mgmt-Tools                    # Management Tools
+      - Web-Mgmt-Console                  # IIS Management Console
+      - Web-Scripting-Tools               # Management Scripting Tools
+      - Web-Mgmt-Service                  # IIS Management Service
+      - Web-Mgmt-Compat                   # Management Compatibility
+      - Web-Metabase                      # IIS Metabase Compatibility
+      - Web-WMI                           # IIS WMI Compatibility
+      - Web-WebSockets                    # WebSockets
+      - Web-AppInit                       # Application Initialization
+      - Web-Asp-Net45                     # ASP.NET 4.5
+      - Web-ISAPI-Ext                     # ISAPI Extensions
+      - Web-ISAPI-Filter                  # ISAPI Filters
+      #- Web-Hostable-Web-Core            # Hostable Web Core (IIS)
+      - Web-Performance                   # Performance Features
+      - Web-Security                      # Security
+      - Web-Filtering                     # Request Filtering
+      - Web-Dir-Browsing                  # Directory Browsing
+      - Web-Http-Errors                   # HTTP Errors
+      - Web-Static-Content                # Static Content
+      - Web-Health                        # Health and Diagnostics
+      - Web-Http-Logging                  # HTTP Logging
+
+      - NET-Framework-Features            # .NET Framework 3.5 Features
+      - NET-HTTP-Activation               # HTTP Activation for .NET 3.5
+      - NET-Non-HTTP-Activ                # Non-HTTP Activation for .NET 3.5
+      - NET-Framework-45-Features         # .NET Framework 4.5 and later
+      - NET-WCF-Services45                # WCF Services for .NET 4.5 and later
+      - NET-WCF-HTTP-Activation45         # HTTP Activation for WCF in .NET 4.5+
+      #- NET-WCF-NonHTTP-Activation        # Non-HTTP Activation for WCF (if available)
+
+      # Client for NFS (if available)
+      - NFS-Client 
+    state: present
+    include_sub_features: yes
+  register: iis_install
+
+- name: Verify IIS installation
+  win_feature:
+    name: Web-Server
+  register: iis_installed
+
+- name: Output IIS Installation Result
+  debug:
+    msg: "{{ iis_installed }}"
+
+- name: Copy the .NET Hosting Bundle installer to the server
+  win_copy:
+    src: "{{ hostable_path }}"  # Adjust the path to the correct installer file
+    dest: C:\Users\{{ ansible_user }}\Desktop\dotnet-hosting-3.1.18-win.exe  # Destination path on the user's desktop
+
+- name: Run the .NET Hosting Bundle installer
+  win_command: "C:\\Users\\{{ ansible_user }}\\Desktop\\dotnet-hosting-3.1.18-win.exe /quiet /norestart"
+  args:
+    creates: "C:\\Program Files\\dotnet\\dotnet.exe"  # Ensure that dotnet is installed by checking the existence of this file
+
+#- name: Clean up the installer file
+#  win_file:
+#    path: C:\temp\dotnet-hosting-3.1.18-win.exe 
+#    state: absent
+
+
+- name: Reboot the server
+  win_reboot:
+    pre_reboot_delay: 10        # Time in seconds to wait before starting the reboot
+    post_reboot_delay: 30       # Time in seconds to wait after reboot
+    reboot_timeout: 600         # Maximum time in seconds to wait for the reboot to complete
+  register: reboot_result
+
+

@@ -1,0 +1,9 @@
+---
+
+- name: Creating multiple IIS pools using API file name
+  hosts: windows
+  
+  vars:
+    api_list         : ./api_list_file
+  roles : 
+    - pool_creation

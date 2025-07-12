@@ -1,0 +1,21 @@
+---
+
+#Set the parameters before running the script. Make sure the api name and the port entered are free.Also do not forget to 
+#set the directory
+
+- name        :   Monitoring Server Setup Playbook
+  hosts       :   monitoring_server
+  remote_user :   ubuntu
+  become: yes
+  
+  roles : 
+    - grafana_prometheus
+  vars  :
+    prometheus_conf: "../configs/prometheus.yml"
+    web_prometheus_conf: "../configs/recording_rules.yml"
+    recording_rules_conf: "../configs/web_prometheus.yml"
+    docker_compose_conf: "../docker/monitoring-compose.yml"
+    nginx_conf: "../configs/grafana.conf"
+  
+  # vars_files:
+  #   - roles/sudo_pass.yaml

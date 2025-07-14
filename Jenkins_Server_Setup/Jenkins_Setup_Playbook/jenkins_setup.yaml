@@ -1,0 +1,18 @@
+---
+
+#Set the parameters before running the script. Make sure the api name and the port entered are free.Also do not forget to 
+#set the directory
+
+- name        :   Jenkins Server Setup Playbook
+  hosts       :   jenkins-server
+  remote_user :   ubuntu
+  become: yes
+  
+  roles : 
+    - jenkins_docker
+  vars  :
+    docker_compose_conf: "../docker/jenkins-compose.yml"
+    nginx_conf: "../configs/jenkins.conf"
+  
+  # vars_files:
+  #   - roles/sudo_pass.yaml

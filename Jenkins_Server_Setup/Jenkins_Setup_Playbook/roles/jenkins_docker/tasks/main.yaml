@@ -1,0 +1,109 @@
+    - name: Update system packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install required dependencies
+      apt:
+        name: 
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Enable Nginx service
+      systemd:
+        name: nginx
+        enabled: yes
+
+    - name: Start Nginx service
+      systemd:
+        name: nginx
+        state: started
+
+
+    - name: Create /etc/jenkins and Docker_Compose directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+      loop:
+        - /etc/jenkins
+        - /home/ubuntu/Docker_Compose
+
+    - name: Copy jenkins-compose.yml to home directory as Docker-Compose
+      copy:
+        src: "{{docker_compose_conf}}"  # Path to your docker-compose file in your Ansible project
+        dest: /home/ubuntu/Docker_Compose  # Home directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Copy nginx.conf to /etc/nginx/sites_available
+      copy:
+        src: "{{nginx_conf}}"  # Path to your docker-compose file in your Ansible project
+        dest: /etc/nginx/sites-available  # Home directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Enable Nginx site
+      file:
+        src: /etc/nginx/sites-available/jenkins.conf
+        dest: /etc/nginx/sites-enabled/jenkins.conf
+        state: link
+
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    
+    - name: Start Docker Compose services
+      command: docker compose -f jenkins-compose.yml up -d
+      args:
+        chdir: /home/ubuntu/Docker_Compose
+
+
+    - name: Apply group changes (manual step required)
+      debug:
+        msg: "Please log out and log back in for the changes to take effect."
